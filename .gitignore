@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# 아직 정리 안 된 메모 — 커밋하고 싶지 않은 것들을 여기 둡니다
+drafts/
