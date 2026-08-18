@@ -1,0 +1,18 @@
+{
+  "ticker": "TQQQ",
+  "splits": 40,
+  "limit_sell_pct": 0.15,
+  "cycle": 1,
+  "cycle_start_cash": 10000.0,
+  "cash": 10000.0,
+  "shares": 0,
+  "cost_basis": 0.0,
+  "progress": 0.0,
+  "realized_total": 0.0,
+  "log": [
+    {
+      "event": "init",
+      "cash": 10000.0
+    }
+  ]
+}
