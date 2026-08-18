@@ -37,9 +37,22 @@
 
 ## 사용법
 
+두 종목을 동시에 굴린다. 상태 파일이 다르므로 `--state` 로 구분한다.
+
+| 계좌 | 상태 파일 | 원금 | 분할 | 지정가율 |
+|---|---|---|---|---|
+| TQQQ | `state/tqqq_40.json` (기본값) | $10,000 | 40 | 15% |
+| SOXL | `state/soxl_20.json` | $10,000 | 20 | 20% |
+
 ```sh
-# 시즌 시작 (원금 1만달러, 40분할, TQQQ)
-python3 -m infinite_buying.cli init --cash 10000 --splits 40 --ticker TQQQ
+# 시즌 시작 (원금 1만달러, 40분할, TQQQ, 기존 보유 2주 @ 77.91 편입)
+python3 -m infinite_buying.cli init --cash 10000 --splits 40 --ticker TQQQ \
+    --shares 2 --avg-price 77.91
+
+# SOXL 은 지정가율이 20% 다
+python3 -m infinite_buying.cli --state infinite_buying/state/soxl_20.json \
+    init --cash 10000 --splits 20 --ticker SOXL --limit-pct 0.20 \
+    --shares 3 --avg-price 147.79
 
 # 오늘 걸 주문표 (직전 종가를 넣는다)
 python3 -m infinite_buying.cli plan --close 76.40 --date 8/17
@@ -52,7 +65,8 @@ python3 -m infinite_buying.cli status
 python3 -m infinite_buying.cli new-cycle   # 보유 0 이 되면 잔금 전액으로 다음 사이클
 ```
 
-상태는 `infinite_buying/state/tqqq_40.json` 에 저장된다. 컨테이너는 매번
+SOXL 쪽 명령에는 모두 `--state infinite_buying/state/soxl_20.json` 을 붙인다.
+상태는 `infinite_buying/state/` 아래에 저장된다. 컨테이너는 매번
 새로 만들어지므로 체결을 반영할 때마다 커밋해야 이어진다.
 
 ## 주의
