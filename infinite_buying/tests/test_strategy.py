@@ -152,3 +152,22 @@ class TestFills(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestInitWithExistingPosition(unittest.TestCase):
+    """기존 보유분을 편입해도 1회매수금액은 원금/분할수 그대로여야 한다."""
+
+    def test_unit_budget_unchanged(self):
+        total, splits, shares, avg = 10_000.0, 40, 2, 77.91
+        cost = shares * avg
+        pos = Position(
+            splits=splits,
+            cycle_start_cash=total,
+            cash=total - cost,
+            shares=shares,
+            cost_basis=cost,
+            progress=cost / (total / splits),
+        )
+        self.assertAlmostEqual(pos.unit_budget, total / splits, places=6)
+        self.assertAlmostEqual(pos.avg_price, avg, places=6)
+        self.assertAlmostEqual(pos.progress, cost / 250.0, places=6)

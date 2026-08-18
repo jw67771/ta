@@ -84,7 +84,9 @@ def main(argv=None) -> int:
     p.add_argument("--ticker", default="TQQQ")
     p.add_argument("--splits", type=int, default=40)
     p.add_argument("--limit-pct", type=float, default=0.15)
-    p.add_argument("--cash", type=float, required=True)
+    p.add_argument("--cash", type=float, required=True, help="총 투자원금 (보유분 원가 포함)")
+    p.add_argument("--shares", type=int, default=0, help="이미 보유 중인 수량")
+    p.add_argument("--avg-price", type=float, default=0.0, help="보유분 매입 평단")
 
     p = sub.add_parser("plan", help="오늘 걸 주문표")
     p.add_argument("--close", type=float, required=True, help="직전 종가")
@@ -106,15 +108,39 @@ def main(argv=None) -> int:
     path = pathlib.Path(args.state)
 
     if args.cmd == "init":
+        # 이미 보유한 물량은 사이클에 편입한다. 원가만큼 잔금이 빠지고
+        # 그만큼 회차가 진행된 것으로 본다 (라오어 중간진입: 잔금과 보유개수를 맞춘다).
+        cost = args.shares * args.avg_price
+        if cost > args.cash:
+            raise SystemExit("보유분 원가가 원금보다 큽니다")
+        unit = args.cash / args.splits
         pos = Position(
             ticker=args.ticker,
             splits=args.splits,
             limit_sell_pct=args.limit_pct,
             cycle_start_cash=args.cash,
-            cash=args.cash,
+            cash=args.cash - cost,
+            shares=args.shares,
+            cost_basis=cost,
+            progress=cost / unit if unit else 0.0,
         )
-        save(pos, path, {"event": "init", "cash": args.cash})
-        print(f"{args.ticker} {args.splits}분할 시즌 시작 · 원금 {money(args.cash)}")
+        save(
+            pos,
+            path,
+            {
+                "event": "init",
+                "cash": args.cash,
+                "shares": args.shares,
+                "avg_price": args.avg_price,
+            },
+        )
+        msg = f"{args.ticker} {args.splits}분할 시즌 시작 · 원금 {money(args.cash)}"
+        if args.shares:
+            msg += (
+                f" · 기존 보유 {args.shares}주 @ {args.avg_price:.2f} 편입"
+                f" (T {pos.progress:.2f} 부터 시작)"
+            )
+        print(msg)
         return 0
 
     pos = load(path)

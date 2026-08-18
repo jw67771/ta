@@ -4,15 +4,17 @@
   "limit_sell_pct": 0.15,
   "cycle": 1,
   "cycle_start_cash": 10000.0,
-  "cash": 10000.0,
-  "shares": 0,
-  "cost_basis": 0.0,
-  "progress": 0.0,
+  "cash": 9844.18,
+  "shares": 2,
+  "cost_basis": 155.82,
+  "progress": 0.62328,
   "realized_total": 0.0,
   "log": [
     {
       "event": "init",
-      "cash": 10000.0
+      "cash": 10000.0,
+      "shares": 2,
+      "avg_price": 77.91
     }
   ]
 }
