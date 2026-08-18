@@ -4,10 +4,10 @@
   "limit_sell_pct": 0.2,
   "cycle": 1,
   "cycle_start_cash": 10000.0,
-  "cash": 9556.63,
-  "shares": 3,
-  "cost_basis": 443.37,
-  "progress": 0.88674,
+  "cash": 9169.33,
+  "shares": 6,
+  "cost_basis": 830.67,
+  "progress": 1.66134,
   "realized_total": 0.0,
   "log": [
     {
@@ -15,6 +15,15 @@
       "cash": 10000.0,
       "shares": 3,
       "avg_price": 147.79
+    },
+    {
+      "event": "fill",
+      "date": "8/18",
+      "close": 129.1,
+      "bought": 3,
+      "sold_loc": 0,
+      "sold_limit": 0,
+      "realized": 0.0
     }
   ]
 }
