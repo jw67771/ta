@@ -100,6 +100,8 @@ def main(argv=None) -> int:
     p.add_argument("--sold-loc", type=int, default=0, help="별지점 LOC 매도 체결 수량")
     p.add_argument("--sold-limit", type=int, default=0, help="지정가 매도 체결 수량")
     p.add_argument("--limit-price", type=float, default=None)
+    p.add_argument("--prev-close", type=float, default=None,
+                   help="그날 주문표를 뽑은 기준 종가 (회차 계산·수량 대조에 사용)")
 
     sub.add_parser("status", help="현재 상태")
     sub.add_parser("new-cycle", help="보유 0 상태에서 다음 사이클 시작")
@@ -154,6 +156,7 @@ def main(argv=None) -> int:
             sold_loc=args.sold_loc,
             sold_limit=args.sold_limit,
             limit_price=args.limit_price,
+            prev_close=args.prev_close,
         )
         save(
             pos,
@@ -166,8 +169,11 @@ def main(argv=None) -> int:
                 "sold_loc": args.sold_loc,
                 "sold_limit": args.sold_limit,
                 "realized": round(res["realized"], 2),
+                "prev_close": args.prev_close,
             },
         )
+        if res["mismatch"]:
+            print(f"⚠ 체결 수량이 주문표와 다릅니다 — {res['mismatch']}")
         print(
             f"반영 완료 · 보유 {pos.shares}주 · 평단 {pos.avg_price:.2f} · "
             f"잔금 {money(pos.cash)} · T {pos.progress:.2f} · "

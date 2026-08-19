@@ -7,7 +7,7 @@
   "cash": 9169.33,
   "shares": 6,
   "cost_basis": 830.67,
-  "progress": 1.66134,
+  "progress": 1.88674,
   "realized_total": 0.0,
   "log": [
     {
@@ -23,7 +23,8 @@
       "bought": 3,
       "sold_loc": 0,
       "sold_limit": 0,
-      "realized": 0.0
+      "realized": 0.0,
+      "prev_close": 151.53
     }
   ]
 }

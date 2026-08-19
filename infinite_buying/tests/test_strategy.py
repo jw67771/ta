@@ -100,7 +100,8 @@ class TestPublishedTables(unittest.TestCase):
         pos = position_from_table("SOXL", 20, 0.20, 5749.72, 538.45, 148.24, 33)
         prices = [o.price for o in pos.plan(151.53, ladder_rungs=10).buys]
         for expected in (59.82, 53.84, 48.94, 44.87, 41.41):
-            self.assertIn(expected, prices)
+            self.assertTrue(any(abs(p - expected) <= 0.011 for p in prices),
+                            f"{expected} 없음: {prices}")
 
     def test_star_pct_is_zero_at_half_way(self):
         """전반전이 끝나는 지점(T = 분할수/2)에서 별지점은 평단과 같아진다."""
@@ -171,3 +172,98 @@ class TestInitWithExistingPosition(unittest.TestCase):
         self.assertAlmostEqual(pos.unit_budget, total / splits, places=6)
         self.assertAlmostEqual(pos.avg_price, avg, places=6)
         self.assertAlmostEqual(pos.progress, cost / 250.0, places=6)
+
+
+class TestPublishedTables0819(unittest.TestCase):
+    """'2040무매 8/19 낮기준' — 8/18 종가(TQQQ 72.53 / SOXL 129.10) 기준 표."""
+
+    def assert_orders(self, orders, expected):
+        """수량은 정확히, 가격은 1센트 오차까지 (표의 잔금·1회매수금액이 반올림값)."""
+        self.assertEqual(len(expected), len(orders[: len(expected)]))
+        for order, (price, qty) in zip(orders, expected):
+            self.assertAlmostEqual(order.price, price, delta=0.011)
+            self.assertEqual(order.qty, qty)
+
+    def test_tqqq_20_splits(self):
+        pos = position_from_table("TQQQ", 20, 0.15, 8415.94, 548.92, 71.29, 33)
+        self.assertAlmostEqual(pos.progress, 4.67, places=2)
+        plan = pos.plan(72.53)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 108.00, places=1)
+        self.assertTrue(plan.two_line)
+        self.assert_orders(plan.buys, [(76.98, 3), (71.29, 4), (68.61, 1),
+                                       (60.99, 1), (54.89, 1), (49.90, 1)])
+        self.assert_orders(plan.sells, [(76.99, 8), (81.98, 25)])
+
+    def test_tqqq_40_splits(self):
+        pos = position_from_table("TQQQ", 40, 0.15, 16636.28, 545.97, 71.67, 66)
+        self.assertAlmostEqual(pos.progress, 9.53, places=2)
+        plan = pos.plan(72.53)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 107.85, places=1)
+        self.assert_orders(plan.buys, [(77.29, 3), (71.67, 4), (68.24, 1),
+                                       (60.66, 1), (54.59, 1), (49.63, 1)])
+        self.assert_orders(plan.sells, [(77.30, 16), (82.42, 50)])
+
+    def test_soxl_20_splits_second_half(self):
+        """후반전(T 10.32) — 별%가 음수가 되고 평단 줄이 사라진다."""
+        pos = position_from_table("SOXL", 20, 0.20, 5233.32, 540.72, 146.17, 37)
+        self.assertAlmostEqual(pos.progress, 10.32, places=2)
+        self.assertFalse(pos.first_half)
+        plan = pos.plan(129.10)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 99.36, places=1)
+        self.assertLess(plan.star_pct, 0)
+        self.assertFalse(plan.two_line)  # 평단(146.17) > 상단 줄(144.59)
+        self.assert_orders(plan.buys, [(144.59, 3), (135.18, 1), (108.14, 1),
+                                       (90.12, 1), (77.24, 1)])
+        self.assert_orders(plan.sells, [(145.23, 9), (175.41, 28)])
+
+    def test_soxl_40_splits_avg_above_big_number(self):
+        """전반전이지만 급락으로 평단(149.97)이 큰수(144.59) 위 — 평단 줄 없음."""
+        pos = position_from_table("SOXL", 40, 0.20, 14983.39, 655.68, 149.97, 72)
+        self.assertAlmostEqual(pos.progress, 17.15, places=2)
+        self.assertTrue(pos.first_half)
+        plan = pos.plan(129.10)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 102.85, places=1)
+        self.assertFalse(plan.two_line)
+        self.assert_orders(plan.buys, [(144.59, 4), (131.13, 1), (109.28, 1),
+                                       (93.66, 1), (81.96, 1)])
+        self.assert_orders(plan.sells, [(154.24, 18), (179.96, 54)])
+
+
+class TestProgressTransition(unittest.TestCase):
+    """8/18 표에서 하루 매수 후 8/19 표의 회차·잔금·1회매수금액이 나와야 한다.
+
+    회차는 체결 금액이 아니라 체결된 줄 수로 센다. TQQQ 는 평단이 종가보다
+    낮아 상단 줄만 체결되어 +0.5, SOXL 은 두 줄 다 체결되어 +1.0 이다.
+    """
+
+    CASES = [
+        # 종목, 분할, 지정가율, 8/18(잔금, u, 평단, 보유), 종가, 매수, 8/19(T, 잔금, u)
+        ("TQQQ", 20, 0.15, (8633.53, 545.32, 71.16, 30), 76.40, 72.53, 3, (4.67, 8415.94, 548.92)),
+        ("TQQQ", 40, 0.15, (16853.87, 544.18, 71.63, 63), 76.40, 72.53, 3, (9.53, 16636.28, 545.97)),
+        ("SOXL", 20, 0.20, (5749.72, 538.45, 148.24, 33), 151.53, 129.10, 4, (10.32, 5233.32, 540.72)),
+        ("SOXL", 40, 0.20, (15628.89, 655.26, 151.52, 67), 151.53, 129.10, 5, (17.15, 14983.39, 655.68)),
+    ]
+
+    def test_transitions(self):
+        for ticker, splits, pct, before, prev_close, close, bought, after in self.CASES:
+            with self.subTest(f"{ticker} {splits}분할"):
+                cash, unit, avg, shares = before
+                pos = position_from_table(ticker, splits, pct, cash, unit, avg, shares)
+                res = pos.apply_fills(close=close, bought=bought, prev_close=prev_close)
+                self.assertIsNone(res["mismatch"], res["mismatch"])
+                exp_T, exp_cash, exp_unit = after
+                self.assertAlmostEqual(pos.progress, exp_T, places=2)
+                self.assertAlmostEqual(pos.cash, exp_cash, delta=0.02)
+                self.assertAlmostEqual(pos.unit_budget, exp_unit, delta=0.05)
+
+    def test_progress_steps_are_half_or_whole(self):
+        for ticker, splits, pct, before, prev_close, close, bought, after in self.CASES:
+            cash, unit, avg, shares = before
+            pos = position_from_table(ticker, splits, pct, cash, unit, avg, shares)
+            step = pos.plan(prev_close).buy_progress(close)
+            self.assertIn(step, (0.5, 1.0))
+
+    def test_qty_mismatch_is_reported(self):
+        pos = position_from_table("TQQQ", 20, 0.15, 8633.53, 545.32, 71.16, 30)
+        res = pos.apply_fills(close=72.53, bought=7, prev_close=76.40)
+        self.assertEqual(res["mismatch"], "계획상 3주 / 신고 7주")
