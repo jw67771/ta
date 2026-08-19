@@ -25,6 +25,11 @@
       "sold_limit": 0,
       "realized": 0.0,
       "prev_close": 151.53
+    },
+    {
+      "event": "stopped",
+      "date": "8/20",
+      "note": "사용자 요청으로 SOXL 무한매수 중단. 재개하려면 이 상태에서 이어가면 된다."
     }
   ]
 }
