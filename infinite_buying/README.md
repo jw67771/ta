@@ -79,3 +79,27 @@ SOXL 쪽 명령에는 모두 `--state infinite_buying/state/soxl_20.json` 을 �
 - 매도쪽 회차 되감기는 공개 표에 매도가 찍힌 날이 아직 없어 미검증이다.
   실제 매도가 나오는 날 중계표와 대조해야 한다.
 - 원금 소진 후의 리버스 모드는 구현되어 있지 않다.
+
+## SOXL 분할매수 사다리 (`dip_ladder.py`)
+
+무한매수법과 별개 전략. 직전 매수가 대비 15% 씩 빠질 때마다 정해진 금액을
+넣어 평단을 낮춘다. 매도 규칙은 없다.
+
+    다음 매수가 = 마지막 매수가 x 0.85
+    회당 금액   = $500 + $250 x (채운 단계수)
+
+체결가가 계획가보다 낮게 잡히면 (갭하락) 다음 단계는 계획가가 아니라
+**실제 체결가** 기준으로 다시 잡는다. 그래서 체결될 때마다 상태를 갱신해야 한다.
+
+```sh
+python3 -c "
+import json
+from infinite_buying.dip_ladder import DipLadder
+l = DipLadder(**{k: v for k, v in json.load(open('infinite_buying/state/soxl_dip.json')).items() if k != 'log'})
+for r in l.plan(3):
+    print(f'{r.step}단계 {r.price:.2f} x {r.qty}주 (\${r.spend:,.0f}) -> 평단 {r.avg_after:.2f}')
+"
+```
+
+상태는 `state/soxl_dip.json`. 무한매수법 시절 상태(`state/soxl_20.json`)는
+재개할 경우를 대비해 그대로 남겨 뒀다.
