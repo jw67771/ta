@@ -267,3 +267,64 @@ class TestProgressTransition(unittest.TestCase):
         pos = position_from_table("TQQQ", 20, 0.15, 8633.53, 545.32, 71.16, 30)
         res = pos.apply_fills(close=72.53, bought=7, prev_close=76.40)
         self.assertEqual(res["mismatch"], "계획상 3주 / 신고 7주")
+
+
+class TestPublishedTables0820(TestPublishedTables0819):
+    """'2040무매 8/20 낮기준' — 8/19 종가 72.06 기준. SOXL 은 사용자가 철회해 TQQQ 만."""
+
+    def test_tqqq_20_splits(self):
+        pos = position_from_table("TQQQ", 20, 0.15, 8199.76, 552.85, 71.35, 36)
+        self.assertAlmostEqual(pos.progress, 5.17, places=2)
+        plan = pos.plan(72.06)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 107.25, places=1)
+        self.assert_orders(plan.buys, [(76.51, 3), (71.35, 4), (69.10, 1),
+                                       (61.42, 1), (55.28, 1), (50.25, 1)])
+        self.assert_orders(plan.sells, [(76.52, 9), (82.05, 27)])
+
+    def test_tqqq_40_splits(self):
+        pos = position_from_table("TQQQ", 40, 0.15, 16420.10, 547.87, 71.69, 69)
+        self.assertAlmostEqual(pos.progress, 10.03, places=2)
+        plan = pos.plan(72.06)
+        self.assertAlmostEqual((1 + plan.star_pct) * 100, 107.48, places=1)
+        self.assert_orders(plan.buys, [(77.04, 3), (71.69, 4), (68.48, 1),
+                                       (60.87, 1), (54.78, 1)])
+        self.assert_orders(plan.sells, [(77.05, 17), (82.44, 52)])
+
+    def test_soxl_20_splits_second_half(self):
+        self.skipTest("SOXL 철회")
+
+    def test_soxl_40_splits_avg_above_big_number(self):
+        self.skipTest("SOXL 철회")
+
+
+class TestProgressTransition0820(unittest.TestCase):
+    """8/19 표 -> 8/20 표. 평단이 종가보다 낮아 상단 줄만 체결 → ΔT = +0.5."""
+
+    CASES = [
+        # 분할, 8/19(잔금, u, 평단, 보유), 전날기준종가, 종가, 매수, 8/20(T, 잔금, u, 평단, 보유)
+        (20, (8415.94, 548.92, 71.29, 33), 72.53, 72.06, 3, (5.17, 8199.76, 552.85, 71.35, 36)),
+        (40, (16636.28, 545.97, 71.67, 66), 72.53, 72.06, 3, (10.03, 16420.10, 547.87, 71.69, 69)),
+    ]
+
+    def test_transitions(self):
+        for splits, before, prev_close, close, bought, after in self.CASES:
+            with self.subTest(f"TQQQ {splits}분할"):
+                cash, unit, avg, shares = before
+                pos = position_from_table("TQQQ", splits, 0.15, cash, unit, avg, shares)
+                res = pos.apply_fills(close=close, bought=bought, prev_close=prev_close)
+                self.assertIsNone(res["mismatch"], res["mismatch"])
+                exp_T, exp_cash, exp_unit, exp_avg, exp_shares = after
+                self.assertAlmostEqual(pos.progress, exp_T, places=2)
+                self.assertAlmostEqual(pos.cash, exp_cash, delta=0.02)
+                self.assertAlmostEqual(pos.unit_budget, exp_unit, delta=0.05)
+                self.assertAlmostEqual(pos.avg_price, exp_avg, delta=0.011)
+                self.assertEqual(pos.shares, exp_shares)
+
+    def test_only_upper_line_filled(self):
+        """종가 72.06 이 평단(71.29/71.67) 보다 위라 평단 줄은 미체결."""
+        for splits, before, prev_close, close, _, _ in self.CASES:
+            cash, unit, avg, shares = before
+            pos = position_from_table("TQQQ", splits, 0.15, cash, unit, avg, shares)
+            plan = pos.plan(prev_close)
+            self.assertEqual(plan.buy_progress(close), 0.5)
+            self.assertGreater(close, round(plan.avg_price, 2))
