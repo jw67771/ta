@@ -5,7 +5,7 @@ from infinite_buying.dip_ladder import DipLadder
 
 def soxl():
     return DipLadder(
-        ticker="SOXL", step_pct=0.15, base_amount=500.0, increment=250.0,
+        ticker="SOXL", step_pct=0.15, base_amount=500.0, increment=100.0,
         cash=9169.33, shares=6, cost_basis=830.67, last_buy_price=129.10,
     )
 
@@ -20,12 +20,25 @@ class TestDipLadder(unittest.TestCase):
     def test_each_rung_is_15_percent_below_the_previous(self):
         rungs = soxl().plan(max_steps=7)
         self.assertEqual(len(rungs), 7)
+        self.assertAlmostEqual(rungs[0].price, 109.73, places=2)
         for prev, cur in zip(rungs, rungs[1:]):
             self.assertAlmostEqual(cur.price / prev.price, 0.85, places=3)
 
     def test_amount_grows_by_increment(self):
         rungs = soxl().plan(max_steps=5)
-        self.assertEqual([r.amount for r in rungs], [500, 750, 1000, 1250, 1500])
+        self.assertEqual([r.amount for r in rungs], [500, 600, 700, 800, 900])
+
+    def test_increment_is_configurable(self):
+        ladder = soxl()
+        ladder.increment = 250.0
+        self.assertEqual([r.amount for r in ladder.plan(max_steps=4)], [500, 750, 1000, 1250])
+
+    def test_ladder_reaches_ten_steps_on_this_budget(self):
+        """완만한 증액이라 잔금 $9,169 로 -80% 까지 10단계가 나온다."""
+        rungs = soxl().plan(max_steps=20)
+        self.assertEqual(len(rungs), 10)
+        self.assertAlmostEqual(rungs[-1].price, 25.38, places=2)
+        self.assertGreaterEqual(rungs[-1].cash_after, 0)
 
     def test_average_falls_monotonically(self):
         ladder = soxl()
@@ -46,7 +59,7 @@ class TestDipLadder(unittest.TestCase):
         self.assertEqual(ladder.step, 1)
         self.assertAlmostEqual(ladder.last_buy_price, 100.00)
         self.assertAlmostEqual(ladder.next_rung().price, 85.00, places=2)
-        self.assertEqual(ladder.next_rung().amount, 750)  # 2단계 금액
+        self.assertEqual(ladder.next_rung().amount, 600)  # 2단계 금액
 
     def test_fill_updates_average(self):
         ladder = soxl()
