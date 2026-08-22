@@ -1,0 +1,20 @@
+{
+  "ticker": "TQQQ",
+  "multiplier": 1.0,
+  "G": 10.0,
+  "band": 0.15,
+  "base_contribution": 100.0,
+  "week": 1,
+  "V": 174.05,
+  "pool": 200.0,
+  "shares": 0,
+  "total_invested": 200.0,
+  "log": [
+    {
+      "event": "init",
+      "pool": 200.0,
+      "week": 1,
+      "V": 174.05
+    }
+  ]
+}
