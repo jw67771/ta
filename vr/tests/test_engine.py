@@ -152,6 +152,8 @@ class TestCycleChain(unittest.TestCase):
     """
 
     TRANSITIONS = [
+        # 라벨, 직전 V, 마지막 Pool, 마지막 평가금 E, 다음 V, 최소, 최대
+        # 최소/최대가 None 이면 그 주차 자료에 밴드가 안 실려 V 만 검증한다.
         ("VR7 0->1주", 71.17, 28.83, 71.17, 174.05, 147.94, 200.16),
         ("VR6 1->3주", 158.73, 44.40, 162.00, 263.69, 224.14, 303.24),
         ("VR6 3->5주", 263.69, 34.20, 242.35, 363.74, 309.18, 418.30),
@@ -164,6 +166,10 @@ class TestCycleChain(unittest.TestCase):
         ("VR6 17->19주", 1029.92, 395.11, 1011.92, 1166.58, 991.59, 1341.57),
         ("VR6 19->21주", 1166.58, 418.83, 1022.70, 1285.71, 1092.85, 1478.57),
         ("VR6 21->23주", 1285.71, 300.81, 1408.79, 1435.25, 1219.96, 1650.54),
+        ("VR6 23->25주", 1435.25, 331.52, 1320.30, 1550.23, None, None),
+        ("VR6 25->27주", 1550.23, 226.04, 1418.13, 1651.95, 1404.16, 1899.74),
+        ("VR6 27->29주", 1651.95, 75.79, 1615.50, 1753.77, 1490.70, 2016.84),
+        ("VR6 29->31주", 1753.77, 175.79, 1919.75, 1897.59, 1612.95, 2182.23),
     ]
 
     def test_all_transitions(self):
@@ -173,8 +179,9 @@ class TestCycleChain(unittest.TestCase):
                 acc.V, acc.pool, acc.shares = V1, pool, 1
                 c = acc.next_cycle(last_price=E)  # 1주 보유로 두면 평가금 = E
                 self.assertAlmostEqual(c.V, exp_V, places=2)
-                self.assertAlmostEqual(c.low, exp_lo, places=2)
-                self.assertAlmostEqual(c.high, exp_hi, places=2)
+                if exp_lo is not None:
+                    self.assertAlmostEqual(c.low, exp_lo, places=2)
+                    self.assertAlmostEqual(c.high, exp_hi, places=2)
 
     def test_pool_carries_contribution(self):
         for name, V1, pool, E, *_ in self.TRANSITIONS:
@@ -225,6 +232,10 @@ class TestPoolChain(unittest.TestCase):
         (17, 395.11, 0.0, 0.0, 495.11),
         (19, 495.11, -76.28, 0.0, 518.83),
         (21, 518.83, -218.02, 0.0, 400.81),
+        (23, 400.81, -69.29, 0.0, 431.52),
+        (25, 431.52, -205.48, 0.0, 326.04),
+        (27, 326.04, -250.25, 0.0, 175.79),
+        (29, 175.79, 0.0, 0.0, 275.79),
     ]
 
     def test_chain(self):
