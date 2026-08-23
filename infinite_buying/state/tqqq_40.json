@@ -1,0 +1,40 @@
+{
+  "ticker": "TQQQ",
+  "splits": 40,
+  "limit_sell_pct": 0.15,
+  "cycle": 1,
+  "cycle_start_cash": 10000.0,
+  "cash": 9410.41,
+  "shares": 8,
+  "cost_basis": 589.5899999999999,
+  "progress": 2.62328,
+  "realized_total": 0.0,
+  "log": [
+    {
+      "event": "init",
+      "cash": 10000.0,
+      "shares": 2,
+      "avg_price": 77.91
+    },
+    {
+      "event": "fill",
+      "date": "8/18",
+      "close": 72.53,
+      "bought": 3,
+      "sold_loc": 0,
+      "sold_limit": 0,
+      "realized": 0.0,
+      "prev_close": 76.4
+    },
+    {
+      "event": "fill",
+      "date": "8/19",
+      "close": 72.06,
+      "bought": 3,
+      "sold_loc": 0,
+      "sold_limit": 0,
+      "realized": 0.0,
+      "prev_close": 72.53
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "ticker": "SOXL",
+  "splits": 20,
+  "limit_sell_pct": 0.2,
+  "cycle": 1,
+  "cycle_start_cash": 10000.0,
+  "cash": 9169.33,
+  "shares": 6,
+  "cost_basis": 830.67,
+  "progress": 1.88674,
+  "realized_total": 0.0,
+  "log": [
+    {
+      "event": "init",
+      "cash": 10000.0,
+      "shares": 3,
+      "avg_price": 147.79
+    },
+    {
+      "event": "fill",
+      "date": "8/18",
+      "close": 129.1,
+      "bought": 3,
+      "sold_loc": 0,
+      "sold_limit": 0,
+      "realized": 0.0,
+      "prev_close": 151.53
+    },
+    {
+      "event": "stopped",
+      "date": "8/20",
+      "note": "사용자 요청으로 SOXL 무한매수 중단. 재개하려면 이 상태에서 이어가면 된다."
+    }
+  ]
+}
