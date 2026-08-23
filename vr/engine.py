@@ -141,6 +141,14 @@ class VRAccount:
              "pool": cycle.pool_start, "price": last_price, "shares": self.shares}
         )
 
+    def dividend(self, amount: float) -> None:
+        """배당을 Pool 에 넣는다.
+
+        배당은 그대로 Pool 로 들어가고, 다음 V 계산의 Pool/G 항에 자연히 반영된다.
+        VR 6기 11주차: Pool 146.14 - 거래액 113.67 + 배당 0.67 = 33.14 로 확인.
+        """
+        self.pool = round2(self.pool + amount)
+
     def trade(self, price: float, qty: int) -> None:
         """매수(+) / 매도(-) 체결을 Pool 에 반영한다."""
         if qty < 0 and -qty > self.shares:

@@ -142,3 +142,59 @@ class TestOrderLadders(unittest.TestCase):
         rungs = acc.buy_ladder(low=224.14)
         self.assertEqual(len(rungs), 1)
         self.assertGreaterEqual(rungs[0].pool_after, 0)
+
+
+class TestCycleChain(unittest.TestCase):
+    """VR 6기 1~13주차와 VR 7기 0~1주차의 사이클 전이를 전부 재현한다.
+
+    (직전 V, 마지막 Pool, 마지막 평가금 E) -> (다음 V, 최소, 최대).
+    적립금 100, G 10 은 전 구간 동일.
+    """
+
+    TRANSITIONS = [
+        ("VR7 0->1주", 71.17, 28.83, 71.17, 174.05, 147.94, 200.16),
+        ("VR6 1->3주", 158.73, 44.40, 162.00, 263.69, 224.14, 303.24),
+        ("VR6 3->5주", 263.69, 34.20, 242.35, 363.74, 309.18, 418.30),
+        ("VR6 5->7주", 363.74, 37.50, 346.64, 464.79, 395.07, 534.51),
+        ("VR6 7->9주", 464.79, 41.14, 413.37, 560.77, 476.65, 644.89),
+        ("VR6 9->11주", 560.77, 46.14, 426.58, 644.17, 547.54, 740.80),
+        ("VR6 11->13주", 644.17, 33.14, 688.38, 754.47, 641.30, 867.64),
+    ]
+
+    def test_all_transitions(self):
+        for name, V1, pool, E, exp_V, exp_lo, exp_hi in self.TRANSITIONS:
+            with self.subTest(name):
+                acc = VRAccount(multiplier=1.0, G=10.0)
+                acc.V, acc.pool, acc.shares = V1, pool, 1
+                c = acc.next_cycle(last_price=E)  # 1주 보유로 두면 평가금 = E
+                self.assertAlmostEqual(c.V, exp_V, places=2)
+                self.assertAlmostEqual(c.low, exp_lo, places=2)
+                self.assertAlmostEqual(c.high, exp_hi, places=2)
+
+    def test_pool_carries_contribution(self):
+        for name, V1, pool, E, *_ in self.TRANSITIONS:
+            with self.subTest(name):
+                acc = VRAccount(multiplier=1.0, G=10.0)
+                acc.V, acc.pool, acc.shares = V1, pool, 1
+                self.assertAlmostEqual(acc.next_cycle(E).pool_start, pool + 100, places=2)
+
+
+class TestDividend(unittest.TestCase):
+    """VR 6기 11주차: Pool 146.14 - 거래액 113.67 + 배당 0.67 = 33.14."""
+
+    def test_dividend_lands_in_pool(self):
+        acc = VRAccount(multiplier=1.0, G=10.0)
+        acc.pool, acc.shares = 146.14, 1
+        acc.pool = round(acc.pool - 113.67, 2)  # 그 사이클 거래액
+        acc.dividend(0.67)
+        self.assertAlmostEqual(acc.pool, 33.14, places=2)
+
+    def test_dividend_flows_into_next_V(self):
+        """배당이 Pool 에 남아 다음 V 의 Pool/G 항을 키운다."""
+        base = VRAccount(multiplier=1.0, G=10.0)
+        base.V, base.pool, base.shares = 644.17, 33.14, 1
+        without = base.next_cycle(688.38).V
+        withdiv = VRAccount(multiplier=1.0, G=10.0)
+        withdiv.V, withdiv.pool, withdiv.shares = 644.17, 33.14, 1
+        withdiv.dividend(10.0)
+        self.assertAlmostEqual(withdiv.next_cycle(688.38).V - without, 1.0, places=2)
