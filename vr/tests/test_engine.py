@@ -159,6 +159,11 @@ class TestCycleChain(unittest.TestCase):
         ("VR6 7->9주", 464.79, 41.14, 413.37, 560.77, 476.65, 644.89),
         ("VR6 9->11주", 560.77, 46.14, 426.58, 644.17, 547.54, 740.80),
         ("VR6 11->13주", 644.17, 33.14, 688.38, 754.47, 641.30, 867.64),
+        ("VR6 13->15주", 754.47, 195.11, 813.28, 883.28, 750.79, 1015.77),
+        ("VR6 15->17주", 883.28, 295.11, 991.64, 1029.92, 875.43, 1184.41),
+        ("VR6 17->19주", 1029.92, 395.11, 1011.92, 1166.58, 991.59, 1341.57),
+        ("VR6 19->21주", 1166.58, 418.83, 1022.70, 1285.71, 1092.85, 1478.57),
+        ("VR6 21->23주", 1285.71, 300.81, 1408.79, 1435.25, 1219.96, 1650.54),
     ]
 
     def test_all_transitions(self):
@@ -198,3 +203,44 @@ class TestDividend(unittest.TestCase):
         withdiv.V, withdiv.pool, withdiv.shares = 644.17, 33.14, 1
         withdiv.dividend(10.0)
         self.assertAlmostEqual(withdiv.next_cycle(688.38).V - without, 1.0, places=2)
+
+
+class TestPoolChain(unittest.TestCase):
+    """VR 6기 1~23주차 Pool 연결.
+
+    처음 Pool + 거래액 + 배당 = 마지막 Pool, 거기에 적립금 100 을 더하면
+    다음 사이클의 처음 Pool 이 된다. 매수(-)·매도(+)·무거래·배당이 모두 섞여 있다.
+    """
+
+    CHAIN = [
+        # 주차, 처음 Pool, 거래액, 배당, 다음 사이클 처음 Pool
+        (1, 145.86, -101.46, 0.0, 144.40),
+        (3, 144.40, -110.20, 0.0, 134.20),
+        (5, 134.20, -96.70, 0.0, 137.50),
+        (7, 137.50, -96.36, 0.0, 141.14),
+        (9, 141.14, -95.00, 0.0, 146.14),
+        (11, 146.14, -113.67, 0.67, 133.14),  # 배당이 낀 사이클
+        (13, 133.14, 61.97, 0.0, 295.11),  # 첫 매도
+        (15, 295.11, 0.0, 0.0, 395.11),  # 밴드 안이라 거래 없음
+        (17, 395.11, 0.0, 0.0, 495.11),
+        (19, 495.11, -76.28, 0.0, 518.83),
+        (21, 518.83, -218.02, 0.0, 400.81),
+    ]
+
+    def test_chain(self):
+        for week, start, traded, div, next_start in self.CHAIN:
+            with self.subTest(f"{week}주차"):
+                acc = VRAccount(multiplier=1.0, G=10.0)
+                acc.pool, acc.shares, acc.V = start, 1, 1000.0
+                # 거래액은 매수면 음수 (Pool 감소), 매도면 양수 (Pool 증가)
+                acc.pool = round(acc.pool + traded, 2)
+                if div:
+                    acc.dividend(div)
+                self.assertAlmostEqual(
+                    acc.next_cycle(last_price=1000.0).pool_start, next_start, places=2
+                )
+
+    def test_chain_covers_buy_sell_flat_and_dividend(self):
+        kinds = {("매수" if t < 0 else "매도" if t > 0 else "무거래") for _, _, t, _, _ in self.CHAIN}
+        self.assertEqual(kinds, {"매수", "매도", "무거래"})
+        self.assertTrue(any(d for *_, d, _ in self.CHAIN))
