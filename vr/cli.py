@@ -86,6 +86,24 @@ def main(argv=None):
               f"   최소 (V x 0.85)  ${c.low:,.2f}   ← 평가금이 여기 아래면 매수\n"
               f"   최대 (V x 1.15)  ${c.high:,.2f}   ← 평가금이 여기 위면 매도\n"
               f"   사이클 시작 Pool ${c.pool_start:,.2f}")
+        shown = VRAccount(**{**acc.__dict__, "pool": c.pool_start, "log": []})
+        buys = shown.buy_ladder(c.low)
+        sells = shown.sell_ladder(c.high)
+        print("\n   ── 매수점 (최소값 / 보유개수, 1주씩) ──")
+        if buys:
+            for r in buys:
+                print(f"     {r.price:>8.2f}  1주  → 보유 {r.shares_after}주 "
+                      f"Pool ${r.pool_after:,.2f}")
+        else:
+            nxt = shown.next_buy_price(c.low)
+            print(f"     Pool 부족으로 한 칸도 못 걺 (매수점 {nxt:.2f} > Pool "
+                  f"${c.pool_start:,.2f}) — 라오어 지시대로 진행")
+        print("   ── 매도점 (최대값 / 보유개수, 1주씩) ──")
+        for r in sells[:3]:
+            print(f"     {r.price:>8.2f}  1주  → 보유 {r.shares_after}주 "
+                  f"Pool ${r.pool_after:,.2f}")
+        if not sells:
+            print("     (보유 0주)")
         if not args.dry_run:
             acc.apply_cycle(c, args.price)
             save(acc, path, {"event": "cycle", "week": c.week, "V": c.V,

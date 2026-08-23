@@ -8,6 +8,15 @@
 
     최소값 = V2 x (1 - 밴드)      최대값 = V2 x (1 + 밴드)
 
+주문표 (한 칸에 1주씩, 지정가)
+
+    매수점 = 최소값 / 보유개수      살수록 보유개수가 늘어 다음 매수점이 낮아진다
+    매도점 = 최대값 / 보유개수      팔수록 보유개수가 줄어 다음 매도점이 높아진다
+
+    그 가격이 되면 보유 평가금이 정확히 밴드 끝에 닿는다. 한 주 사고팔아
+    평가금을 밴드 안으로 되돌리는 것이 VR 의 리밸런싱이다.
+    매수 사다리는 Pool 이 감당하는 데까지만 건다.
+
     V       목표 평가금 (Value). 계좌가 이 금액이 되도록 리밸런싱한다.
     E       직전 사이클 마지막 평가금
     Pool    직전 사이클 마지막 예수금 (적립금을 더하기 전 값)
@@ -29,6 +38,17 @@ DEFAULT_BAND = 0.15
 
 def round2(value: float) -> float:
     return math.floor(value * 100 + 0.5) / 100
+
+
+@dataclass
+class Rung:
+    """주문표 한 칸."""
+
+    price: float
+    qty: int  # 매수 +1, 매도 -1
+    shares_after: int
+    pool_after: float
+    affordable: bool = True
 
 
 @dataclass
@@ -81,6 +101,34 @@ class VRAccount:
             pool_start=round2(self.pool + self.contribution),
             contribution=self.contribution,
         )
+
+    def buy_ladder(self, low: float, max_rungs: int = 8) -> list[Rung]:
+        """매수 주문표. 매수점 = 최소값 / 보유개수, 한 칸에 1주."""
+        rungs: list[Rung] = []
+        n, pool = self.shares, self.pool
+        while n > 0 and len(rungs) < max_rungs:
+            price = round2(low / n)
+            if price > pool:
+                break
+            pool = round2(pool - price)
+            n += 1
+            rungs.append(Rung(price=price, qty=1, shares_after=n, pool_after=pool))
+        return rungs
+
+    def next_buy_price(self, low: float) -> float:
+        """Pool 이 모자라 못 거는 경우까지 포함한 다음 매수점."""
+        return round2(low / self.shares) if self.shares else 0.0
+
+    def sell_ladder(self, high: float, max_rungs: int = 8) -> list[Rung]:
+        """매도 주문표. 매도점 = 최대값 / 보유개수, 한 칸에 1주."""
+        rungs: list[Rung] = []
+        n, pool = self.shares, self.pool
+        while n > 0 and len(rungs) < max_rungs:
+            price = round2(high / n)
+            pool = round2(pool + price)
+            n -= 1
+            rungs.append(Rung(price=price, qty=-1, shares_after=n, pool_after=pool))
+        return rungs
 
     def apply_cycle(self, cycle: Cycle, last_price: float) -> None:
         """사이클을 확정한다. V 와 Pool 을 넘기고 주차를 올린다."""
