@@ -17,3 +17,13 @@ lint: isort
 test: lint
 	coverage run -m unittest discover
 	coverage report -m
+
+.PHONY: research research-validate research-index
+
+research-validate:
+	python3 research/tools/validate.py
+
+research-index:
+	python3 research/tools/build_index.py
+
+research: research-validate research-index

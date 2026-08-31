@@ -1,3 +1,14 @@
+> **이 포크에 대하여**
+>
+> 이 저장소는 유튜버 **성환김**의 투자철학과 종목분석을 기록해 내 투자에 참고하기 위한
+> 개인 아카이브입니다. 리서치 노트는 [`research/`](research/)에 있습니다 —
+> [사용법](research/README.md) · [색인](research/INDEX.md) · [스키마](research/SCHEMA.md)
+>
+> 아래는 원본 프로젝트 [bukosabino/ta](https://github.com/bukosabino/ta)의 README이며,
+> `ta/` 패키지는 종목 가격 데이터에 기술적 지표를 붙일 때 쓰기 위해 그대로 두었습니다.
+
+---
+
 ![CircleCI](https://img.shields.io/circleci/build/github/bukosabino/ta/master)
 [![Documentation Status](https://readthedocs.org/projects/technical-analysis-library-in-python/badge/?version=latest)](https://technical-analysis-library-in-python.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/bukosabino/ta/badge.svg)](https://coveralls.io/github/bukosabino/ta)
