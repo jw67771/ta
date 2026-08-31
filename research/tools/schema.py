@@ -38,6 +38,9 @@ CATEGORIES = (
 STATUSES = ("confirmed", "tentative")
 ACCESS = ("public", "membership")
 
+# 9화 '주식을 분류 해보자' 기준. 회수율과 성장률의 조합으로 종목 성격을 나눈다.
+CLASSES = ("아파트", "빌라", "재개발")
+
 FRONT_MATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---[ \t]*\r?\n?(.*)\Z", re.DOTALL)
 VIDEO_NAME_RE = re.compile(r"\A(\d{4}-\d{2}-\d{2})-(.+)\Z")
 PRINCIPLE_ID_RE = re.compile(r"\A[a-z0-9]+(?:-[a-z0-9]+)*\Z")

@@ -109,15 +109,23 @@ def check_video(report, path, meta):
     if episode is not None and not meta.get("series"):
         report.error(path, "episode가 있으면 series도 있어야 함")
 
-    tickers = meta.get("tickers")
-    if tickers is not None and not isinstance(tickers, list):
-        report.error(path, "tickers는 목록이어야 함")
+    for field in ("tickers", "mentioned"):
+        if meta.get(field) is not None and not isinstance(meta.get(field), list):
+            report.error(path, f"{field}는 목록이어야 함")
+    overlap = set(map(str, meta.get("tickers") or [])) & set(map(str, meta.get("mentioned") or []))
+    if overlap:
+        report.error(
+            path,
+            f"tickers와 mentioned에 중복: {', '.join(sorted(overlap))}"
+            " (다룬 종목이면 tickers, 맥락상 언급이면 mentioned 한쪽만)",
+        )
 
 
 def check_stock(report, path, meta):
     if not _require(report, path, meta, ["type", "ticker", "name", "market", "views"]):
         return
     _enum(report, path, meta.get("market"), schema.MARKETS, "market")
+    _enum(report, path, meta.get("class"), schema.CLASSES, "class")
 
     ticker = meta.get("ticker")
     if str(ticker) != path.stem:
@@ -199,6 +207,20 @@ def cross_checks(report, documents):
                 report.warn(
                     path, f"티커 {ticker}에 대응하는 stocks/{ticker}.md 가 아직 없음"
                 )
+
+    mention_count = {}
+    for path, meta, _ in documents["video"]:
+        if not isinstance(meta, dict):
+            continue
+        for ticker in meta.get("mentioned") or []:
+            mention_count.setdefault(str(ticker), []).append(schema.rel(path))
+    for ticker, where in sorted(mention_count.items()):
+        if ticker not in known_tickers and len(where) >= 2:
+            report.warn(
+                schema.RESEARCH_ROOT / "videos",
+                f"{ticker}가 {len(where)}개 노트에서 언급됨 — 종목 노트로 정리할 때가 됐는지 확인"
+                f" ({', '.join(where)})",
+            )
 
     cited = set()
     for kind in ("stock", "principle"):

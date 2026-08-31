@@ -77,6 +77,7 @@ def stock_section(entries, fallback):
                     _cell(meta.get("name", "-")),
                     _cell(meta.get("market", "-")),
                     _cell(meta.get("sector") or "-"),
+                    _cell(meta.get("class") or "-"),
                     (when.isoformat() + ("" if exact else "~")) if when else "-",
                     _cell(view.get("stance", "-")) if view else "-",
                     _num(view.get("target_price")) if view else "-",
@@ -87,11 +88,12 @@ def stock_section(entries, fallback):
     rows.sort(key=lambda r: r["sort"], reverse=True)
 
     lines += [
-        "| 티커 | 종목명 | 시장 | 섹터 | 최신 의견일 | 스탠스 | 목표가 | 의견 수 |",
-        "|---|---|---|---|---|---|---|---|",
+        "| 티커 | 종목명 | 시장 | 섹터 | 분류 | 최신 의견일 | 스탠스 | 목표가 | 의견 수 |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     lines += ["| " + " | ".join(r["cells"]) + " |" for r in rows]
     lines.append("")
+    lines += ["`분류`는 9화 기준(아파트 / 빌라 / 재개발)입니다.", ""]
     if approximate:
         lines += [
             "`~` 표시는 의견 날짜를 몰라 출처 노트의 날짜로 대신한 것입니다.",
