@@ -147,7 +147,7 @@ views:
 type: principle
 id: margin-of-safety         # 파일명(margin-of-safety.md)과 일치. 영소문자·숫자·하이픈
 title: 안전마진 확보
-category: 매수원칙            # 매수원칙 | 매도원칙 | 종목선정 | 리스크관리 | 포트폴리오 | 심리 | 시장관
+category: 매수원칙            # 매수원칙 | 매도원칙 | 종목선정 | 재무제표 | 리스크관리 | 포트폴리오 | 심리 | 시장관
 status: confirmed            # confirmed | tentative
 sources:
   - videos/2026-08-20-slug.md

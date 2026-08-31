@@ -2,7 +2,7 @@
 type: principle
 id: <파일명과 동일한 kebab-case 식별자>
 title: <원칙 이름>
-category: 매수원칙       # 매수원칙 | 매도원칙 | 종목선정 | 리스크관리 | 포트폴리오 | 심리 | 시장관
+category: 매수원칙       # 매수원칙 | 매도원칙 | 종목선정 | 재무제표 | 리스크관리 | 포트폴리오 | 심리 | 시장관
 status: tentative       # confirmed(2건 이상 확인) | tentative(1건 또는 추정)
 sources:
   - videos/2026-01-01-<slug>.md

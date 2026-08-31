@@ -10,6 +10,8 @@ sources:
   - videos/membership-06-altria.md
   - videos/membership-09-classification.md
   - videos/membership-10-sell-criteria.md
+  - videos/membership-15-financing-cash-flow.md
+  - videos/membership-18-amat.md
 ---
 
 ## 원칙
@@ -42,6 +44,12 @@ sources:
 > [10화] 특히 '회수율 없이' 성장률만 있는 주식은 하락폭이 큼
 > — [출처](../videos/membership-10-sell-criteria.md)
 
+15화가 이 비율이 재무제표 어디에서 나오는지를 알려준다.
+
+> [15화] → Dividend : 배당금 / → Stock Repurchased : 자사주매입
+> → 2개가 합쳐져서 1강에서 배웠던 '회수율'이 됨
+> — [출처](../videos/membership-15-financing-cash-flow.md)
+
 ## 계산 예시
 
 | | 스타벅스 (1화) | 마스터카드 (2화) | 알트리아 (6화) |
@@ -65,6 +73,25 @@ sources:
   회수율만 보면 이걸 구분하지 못한다. 슬라이드에는 순부채를 반영한다는 언급이 없다.
 - **"3% → 3.4%"의 전제.** 이 계산은 주가가 그대로일 때만 성립한다. 주가가 성장률만큼 오르면
   회수율은 제자리다. 복리로 쌓이는 건 회수율이 아니라 주당순이익이다.
+
+## 지급 여력까지 봐야 한다 (18화)
+
+회수율은 비율일 뿐, **그 돈이 어디서 나오는지**는 따로 봐야 한다.
+18화가 그 계산을 보여준다.
+
+```
+영업활동 현금흐름            +8B
+Capex                       -1B
+Dividend & Repurchase       -4B   ← 회수율로 나간 현금
+                          ──────
+남는 현금 → 대차대조표        +3B   ← 여력이 있다
+```
+
+> [18화] → 그런데도 회수율을 더 올릴 수 있는 '현금흐름'
+> — [출처](../videos/membership-18-amat.md)
+
+남는 돈이 있으면 지금 수준의 환원이 지속 가능하고 늘릴 여력도 있다.
+마이너스라면 빚이나 자산을 팔아 배당하는 중이다 — 아래 반례가 실제로 일어난 경우다.
 
 ## 내 적용
 

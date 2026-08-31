@@ -30,6 +30,7 @@ CATEGORIES = (
     "매수원칙",
     "매도원칙",
     "종목선정",
+    "재무제표",
     "리스크관리",
     "포트폴리오",
     "심리",
@@ -149,12 +150,16 @@ def latest_view(meta: dict, fallback=None):
     if not isinstance(views, list):
         return None, None, False
     dated = []
-    for view in views:
+    for index, view in enumerate(views):
         if not isinstance(view, dict):
             continue
         when, exact = view_date(view, fallback)
         if when is not None:
-            dated.append((view, when, exact))
+            dated.append((view, when, exact, index))
     if not dated:
         return None, None, False
-    return max(dated, key=lambda item: item[1])
+    # 날짜가 같으면 목록에서 나중에 적힌 쪽을 최신으로 본다.
+    # 노트 작성 규칙이 "의견이 바뀌면 아래로 쌓는다"이고, 날짜를 모르는 강의 자료는
+    # 출처 노트의 날짜로 대체되어 서로 같아지기 때문이다.
+    latest = max(dated, key=lambda item: (item[1], item[3]))
+    return latest[0], latest[1], latest[2]
