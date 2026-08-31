@@ -12,6 +12,8 @@ sources:
   - videos/membership-10-sell-criteria.md
   - videos/membership-15-financing-cash-flow.md
   - videos/membership-18-amat.md
+  - videos/membership-22-buyback-vs-dividend.md
+  - videos/membership-27-wirecard.md
 ---
 
 ## 원칙
@@ -73,6 +75,25 @@ sources:
   회수율만 보면 이걸 구분하지 못한다. 슬라이드에는 순부채를 반영한다는 언급이 없다.
 - **"3% → 3.4%"의 전제.** 이 계산은 주가가 그대로일 때만 성립한다. 주가가 성장률만큼 오르면
   회수율은 제자리다. 복리로 쌓이는 건 회수율이 아니라 주당순이익이다.
+
+## 이 개념이 왜 생겼는가 (27화)
+
+와이어카드 분식회계로 상장폐지를 겪은 뒤 만들어진 개념이다.
+
+> [27화] → 재무제표만 보지 않고 5가지 힘을 함께 보기 시작 / → 회수율 창시
+> — [출처](../videos/membership-27-wirecard.md)
+
+이익은 꾸며낼 수 있어도 **통장에서 나간 배당은 꾸며내기 어렵다.**
+회수율이 "주주에게 **실제로** 돌아온 돈"인 이유가 여기 있다
+→ [방법론의 기원](method-origin.md).
+
+## 세후로는 두 축이 같지 않다 (22화)
+
+> [22화] → 어릴수록 자사주매입이 유리 '평가이익'은 세금 0원 / → '배당'은 15% 세금
+> — [출처](../videos/membership-22-buyback-vs-dividend.md)
+
+배당 3%와 자사주매입 3%는 세후 값어치가 다르다. 그래서 회수율은 **합계만이 아니라
+구성비까지** 기록해야 한다 → [자사주매입 vs 배당](buyback-vs-dividend.md).
 
 ## 지급 여력까지 봐야 한다 (18화)
 
