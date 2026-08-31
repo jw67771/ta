@@ -6,8 +6,8 @@ market: KOSPI           # KOSPI | KOSDAQ | NASDAQ | NYSE | AMEX | TSE | HKEX | E
 sector: <섹터>
 currency: KRW
 views:
-  - date: 2026-01-01
-    stance: 관심         # 매수 | 비중확대 | 관심 | 중립 | 비중축소 | 매도 | 보유
+  - date: 2026-01-01   # 선택. 비우면 출처 노트 날짜로 대체
+    stance: 관심         # 매수 | 비중확대 | 관심 | 중립 | 비중축소 | 매도 | 보유 | 사례
     source: videos/2026-01-01-<slug>.md
     price:
     target_price:

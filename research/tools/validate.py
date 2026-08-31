@@ -68,14 +68,17 @@ def _source_exists(report, path, source, label):
 
 
 def check_video(report, path, meta):
-    if not _require(report, path, meta, ["type", "title", "url", "published", "captured", "source", "confidence"]):
+    if not _require(report, path, meta, ["type", "title", "captured", "source", "confidence"]):
         return
     _enum(report, path, meta.get("source"), schema.SOURCE_KINDS, "source")
     _enum(report, path, meta.get("confidence"), schema.CONFIDENCE, "confidence")
+    _enum(report, path, meta.get("access"), schema.ACCESS, "access")
 
     url = meta.get("url")
-    if isinstance(url, str) and not url.startswith("http"):
+    if url is not None and (not isinstance(url, str) or not url.startswith("http")):
         report.error(path, f"url은 http로 시작해야 함: {url!r}")
+    if url is None and meta.get("access") != "membership":
+        report.warn(path, "url이 없음 (멤버십 전용이면 access: membership 을 명시할 것)")
 
     published = _date(report, path, meta.get("published"), "published")
     captured = _date(report, path, meta.get("captured"), "captured")
@@ -83,14 +86,28 @@ def check_video(report, path, meta):
         report.error(path, f"captured({captured})가 published({published})보다 빠름")
     if published and published > datetime.date.today():
         report.warn(path, f"published가 미래 날짜임: {published}")
+    if published is None:
+        report.warn(path, "published(공개일)를 모름 — 확인되면 채우고 파일명에 날짜를 붙일 것")
 
+    # 공개일을 아는 노트만 파일명에 날짜를 강제한다. 모르면 자유 슬러그를 허용하되,
+    # 날짜처럼 보이는 접두사가 published와 어긋나는 것은 막는다.
     matched = schema.VIDEO_NAME_RE.match(path.stem)
-    if matched is None:
-        report.error(path, "파일명은 YYYY-MM-DD-<slug>.md 형식이어야 함")
+    if published and matched is None:
+        report.error(path, "published를 아는 노트의 파일명은 YYYY-MM-DD-<slug>.md 여야 함")
     elif published and matched.group(1) != published.isoformat():
         report.error(
             path, f"파일명 날짜({matched.group(1)})와 published({published})가 다름"
         )
+    elif published is None and matched is not None:
+        report.error(
+            path, f"파일명에 날짜({matched.group(1)})가 있는데 published가 비어 있음"
+        )
+
+    episode = meta.get("episode")
+    if episode is not None and not isinstance(episode, int):
+        report.error(path, f"episode는 정수여야 함: {episode!r}")
+    if episode is not None and not meta.get("series"):
+        report.error(path, "episode가 있으면 series도 있어야 함")
 
     tickers = meta.get("tickers")
     if tickers is not None and not isinstance(tickers, list):
@@ -117,11 +134,15 @@ def check_stock(report, path, meta):
         if not isinstance(view, dict):
             report.error(path, f"{label}는 매핑이어야 함")
             continue
-        for field in ("date", "stance", "source"):
+        for field in ("stance", "source"):
             if view.get(field) in (None, ""):
                 report.error(path, f"{label}.{field} 누락")
         _enum(report, path, view.get("stance"), schema.STANCES, f"{label}.stance")
+        # date는 선택. 강의 공개일을 모르는 자료가 있어 억지 날짜를 넣게 하지 않는다.
+        # 대신 색인에서 출처 노트의 날짜로 대체하고, 여기서는 경고만 남긴다.
         view_date = _date(report, path, view.get("date"), f"{label}.date")
+        if view.get("date") in (None, ""):
+            report.warn(path, f"{label}.date 없음 — 출처 노트의 날짜로 대체됨")
         if view.get("source") is not None:
             _source_exists(report, path, view.get("source"), f"{label}.source")
         for field in ("price", "target_price"):

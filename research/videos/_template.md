@@ -1,12 +1,15 @@
 ---
 type: video
 title: "<영상 제목을 그대로>"
-url: https://www.youtube.com/watch?v=<VIDEO_ID>
+url: https://www.youtube.com/watch?v=<VIDEO_ID>   # 선택. 멤버십 전용이면 지울 것
 video_id: <VIDEO_ID>
 channel: 성환김
-published: 2026-01-01
+series:                 # 선택. 연속 강의면 시리즈명
+episode:                # 선택. series가 있을 때만, 정수
+access: public          # public | membership
+published: 2026-01-01   # 모르면 비우고 파일명에서도 날짜를 뺄 것
 captured: 2026-01-01
-source: transcript      # transcript | summary | manual
+source: transcript      # transcript | summary | manual | slides
 confidence: high        # high | medium | low
 tickers: []
 topics: []
@@ -26,6 +29,8 @@ topics: []
 > [00:00] <인용>
 
 ## 언급된 종목
+
+스탠스가 매매의견이 아니라 설명용 예시라면 `사례`로 적는다.
 
 | 티커 | 종목명 | 스탠스 | 근거 요약 |
 |---|---|---|---|
@@ -47,4 +52,5 @@ topics: []
 
 원문이 불분명하거나 사실 확인이 필요한 부분.
 
+- [ ] 공개일 (`published`를 비웠다면)
 - [ ] 

@@ -21,9 +21,30 @@ INDEX_PATH = schema.RESEARCH_ROOT / "INDEX.md"
 HEADER = "<!-- 이 파일은 research/tools/build_index.py 가 생성합니다. 직접 고치지 마세요. -->"
 
 
+def _cell(text):
+    """표 칸에 넣을 문자열. 파이프는 표를 깨뜨리므로 이스케이프한다."""
+    return str(text).replace("|", "\\|")
+
+
+def _label(text):
+    """링크 표시 문자열. 대괄호는 링크 문법을 깨뜨리므로 함께 이스케이프한다."""
+    return _cell(text).replace("[", "\\[").replace("]", "\\]")
+
+
+def _title(meta, path):
+    """색인에 쓸 제목. 시리즈 열과 겹치는 '[시리즈]' 접두사는 덜어낸다."""
+    title = str(meta.get("title", path.stem))
+    series = meta.get("series")
+    if series:
+        prefix = f"[{series}]"
+        if title.startswith(prefix):
+            title = title[len(prefix):].strip()
+    return title
+
+
 def _link(path):
     rel = schema.rel(path)
-    return f"[{path.stem}]({rel})"
+    return f"[{_label(path.stem)}]({rel})"
 
 
 def _num(value):
@@ -36,26 +57,28 @@ def _valid(entries):
     return [(p, m, b) for p, m, b in entries if isinstance(m, dict)]
 
 
-def stock_section(entries):
+def stock_section(entries, fallback):
     lines = ["## 종목", ""]
     if not entries:
         lines += ["_아직 없음._", ""]
         return lines
 
     rows = []
+    approximate = False
     for path, meta, _ in entries:
-        view = schema.latest_view(meta)
-        view_date = schema.as_date(view.get("date")) if view else None
+        view, when, exact = schema.latest_view(meta, fallback)
+        if when and not exact:
+            approximate = True
         rows.append(
             {
-                "sort": view_date or schema.as_date("1900-01-01"),
+                "sort": when or schema.as_date("1900-01-01"),
                 "cells": [
                     _link(path),
-                    str(meta.get("name", "-")),
-                    str(meta.get("market", "-")),
-                    str(meta.get("sector") or "-"),
-                    view_date.isoformat() if view_date else "-",
-                    str(view.get("stance", "-")) if view else "-",
+                    _cell(meta.get("name", "-")),
+                    _cell(meta.get("market", "-")),
+                    _cell(meta.get("sector") or "-"),
+                    (when.isoformat() + ("" if exact else "~")) if when else "-",
+                    _cell(view.get("stance", "-")) if view else "-",
                     _num(view.get("target_price")) if view else "-",
                     str(len(meta.get("views") or [])),
                 ],
@@ -69,6 +92,12 @@ def stock_section(entries):
     ]
     lines += ["| " + " | ".join(r["cells"]) + " |" for r in rows]
     lines.append("")
+    if approximate:
+        lines += [
+            "`~` 표시는 의견 날짜를 몰라 출처 노트의 날짜로 대신한 것입니다.",
+            "`사례` 스탠스는 매매의견이 아니라 강의 예시로 등장했다는 뜻입니다.",
+            "",
+        ]
     return lines
 
 
@@ -92,7 +121,8 @@ def principle_section(entries):
             mark = "" if status == "confirmed" else " _(잠정)_"
             count = len(meta.get("sources") or [])
             lines.append(
-                f"- [{meta.get('title', path.stem)}]({schema.rel(path)}){mark} — 출처 {count}건"
+                f"- [{_label(meta.get('title', path.stem))}]({schema.rel(path)})"
+                f"{mark} — 출처 {count}건"
             )
         lines.append("")
     return lines
@@ -107,21 +137,27 @@ def video_section(entries):
     rows = []
     for path, meta, _ in entries:
         published = schema.as_date(meta.get("published"))
-        tickers = ", ".join(str(t) for t in (meta.get("tickers") or [])) or "-"
+        captured = schema.as_date(meta.get("captured"))
+        tickers = _cell(", ".join(str(x) for x in (meta.get("tickers") or [])) or "-")
+        series = meta.get("series")
+        episode = meta.get("episode")
+        label = _cell(f"{series} {episode}화" if series and episode else (series or "-"))
         rows.append(
             {
-                "sort": published or schema.as_date("1900-01-01"),
+                "sort": published or captured or schema.as_date("1900-01-01"),
+                "sub": episode if isinstance(episode, int) else 0,
                 "cells": [
-                    published.isoformat() if published else "-",
-                    f"[{meta.get('title', path.stem)}]({schema.rel(path)})",
+                    published.isoformat() if published else "미상",
+                    label,
+                    f"[{_label(_title(meta, path))}]({schema.rel(path)})",
                     tickers,
-                    f"{meta.get('source', '-')}/{meta.get('confidence', '-')}",
+                    _cell(f"{meta.get('source', '-')}/{meta.get('confidence', '-')}"),
                 ],
             }
         )
-    rows.sort(key=lambda r: r["sort"], reverse=True)
+    rows.sort(key=lambda r: (r["sort"], r["sub"]), reverse=True)
 
-    lines += ["| 공개일 | 제목 | 종목 | 출처/신뢰도 |", "|---|---|---|---|"]
+    lines += ["| 공개일 | 시리즈 | 제목 | 종목 | 출처/신뢰도 |", "|---|---|---|---|---|"]
     lines += ["| " + " | ".join(r["cells"]) + " |" for r in rows]
     lines.append("")
     return lines
@@ -141,7 +177,7 @@ def render():
         f"종목 {len(stocks)} · 원칙 {len(principles)} · 영상 노트 {len(videos)}",
         "",
     ]
-    lines += stock_section(stocks)
+    lines += stock_section(stocks, schema.source_dates())
     lines += principle_section(principles)
     lines += video_section(videos)
     return "\n".join(lines).rstrip() + "\n"

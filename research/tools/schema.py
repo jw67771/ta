@@ -21,9 +21,11 @@ DOC_DIRS = {
 }
 
 MARKETS = ("KOSPI", "KOSDAQ", "NASDAQ", "NYSE", "AMEX", "TSE", "HKEX", "ETC")
-STANCES = ("매수", "비중확대", "관심", "중립", "비중축소", "매도", "보유")
+# "사례"는 매매의견이 아니라 강의·설명의 예시로 등장했다는 뜻이다.
+# 추천하지 않은 종목에 억지로 스탠스를 붙이지 않기 위해 둔다.
+STANCES = ("매수", "비중확대", "관심", "중립", "비중축소", "매도", "보유", "사례")
 CONFIDENCE = ("high", "medium", "low")
-SOURCE_KINDS = ("transcript", "summary", "manual")
+SOURCE_KINDS = ("transcript", "summary", "manual", "slides")
 CATEGORIES = (
     "매수원칙",
     "매도원칙",
@@ -34,6 +36,7 @@ CATEGORIES = (
     "시장관",
 )
 STATUSES = ("confirmed", "tentative")
+ACCESS = ("public", "membership")
 
 FRONT_MATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---[ \t]*\r?\n?(.*)\Z", re.DOTALL)
 VIDEO_NAME_RE = re.compile(r"\A(\d{4}-\d{2}-\d{2})-(.+)\Z")
@@ -111,12 +114,44 @@ def as_date(value):
     return None
 
 
-def latest_view(meta: dict):
-    """종목 노트에서 가장 최근 의견 항목을 돌려준다."""
+def source_dates():
+    """영상 노트 경로 -> 대표 날짜(published 우선, 없으면 captured) 매핑.
+
+    공개일을 모르는 멤버십 강의처럼 date가 비어 있는 의견의 시점을 추정하는 데 쓴다.
+    """
+    dates = {}
+    for path, meta, _ in load("video"):
+        if not isinstance(meta, dict):
+            continue
+        dates[rel(path)] = as_date(meta.get("published")) or as_date(meta.get("captured"))
+    return dates
+
+
+def view_date(view: dict, fallback=None):
+    """의견의 시점. date가 없으면 (exact=False로) 출처 노트의 날짜를 쓴다.
+
+    반환값은 (date, exact) 튜플이며, 둘 다 없으면 (None, False).
+    """
+    explicit = as_date(view.get("date")) if isinstance(view, dict) else None
+    if explicit is not None:
+        return explicit, True
+    if fallback:
+        return fallback.get(view.get("source")), False
+    return None, False
+
+
+def latest_view(meta: dict, fallback=None):
+    """종목 노트에서 가장 최근 의견 항목을 (view, date, exact)로 돌려준다."""
     views = meta.get("views")
     if not isinstance(views, list):
-        return None
-    dated = [v for v in views if isinstance(v, dict) and as_date(v.get("date"))]
+        return None, None, False
+    dated = []
+    for view in views:
+        if not isinstance(view, dict):
+            continue
+        when, exact = view_date(view, fallback)
+        if when is not None:
+            dated.append((view, when, exact))
     if not dated:
-        return None
-    return max(dated, key=lambda v: as_date(v["date"]))
+        return None, None, False
+    return max(dated, key=lambda item: item[1])
